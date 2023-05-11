@@ -270,7 +270,11 @@ public class FighterPlugin extends LoopedPlugin
 			Movement.walkTo(mob.getWorldLocation());
 			return -4;
 		}
-
+		if(Players.getLocal().getWorldLocation() != center)
+		{
+		Movement.walkTo(center);
+		return -4;
+}
 		mob.interact("Attack");
 		return -3;
 	}
