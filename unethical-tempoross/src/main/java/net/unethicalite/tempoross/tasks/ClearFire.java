@@ -5,23 +5,19 @@ import net.unethicalite.tempoross.TemporossPlugin;
 
 import static net.unethicalite.tempoross.TemporossID.ITEM_WATER_BUCKET;
 
-public class ClearFire extends TemporossTask
-{
-	public ClearFire(TemporossPlugin context)
-	{
-		super(context);
-	}
+public class ClearFire extends TemporossTask {
+    public ClearFire(TemporossPlugin context) {
+        super(context);
+    }
 
-	@Override
-	public boolean validate()
-	{
-		return getFireToClear() != null && Inventory.contains(ITEM_WATER_BUCKET);
-	}
+    @Override
+    public boolean validate() {
+        return getFireToClear() != null && Inventory.contains(ITEM_WATER_BUCKET);
+    }
 
-	@Override
-	public int execute()
-	{
-		getFireToClear().interact("Douse");
-		return -2;
-	}
+    @Override
+    public int execute() {
+        getFireToClear().interact("Douse");
+        return -2;
+    }
 }

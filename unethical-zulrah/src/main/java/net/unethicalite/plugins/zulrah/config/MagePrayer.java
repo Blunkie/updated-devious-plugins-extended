@@ -5,12 +5,11 @@ import lombok.RequiredArgsConstructor;
 import net.runelite.api.Prayer;
 
 @RequiredArgsConstructor
-public enum MagePrayer
-{
-	AUGURY(Prayer.AUGURY),
-	MYSTIC_MIGHT(Prayer.MYSTIC_MIGHT),
-	;
+public enum MagePrayer {
+    AUGURY(Prayer.AUGURY),
+    MYSTIC_MIGHT(Prayer.MYSTIC_MIGHT),
+    ;
 
-	@Getter
-	private final Prayer prayer;
+    @Getter
+    private final Prayer prayer;
 }

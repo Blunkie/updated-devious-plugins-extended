@@ -5,8 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
-public enum AntifireType
-{
+public enum AntifireType {
     ANTIFIRE(2458, 2456, 2454, 2452),
     EXTENDED_ANTIFIRE(11957, 11955, 11953, 11951),
     SUPER_ANTIFIRE(21987, 21984, 21981, 21987),

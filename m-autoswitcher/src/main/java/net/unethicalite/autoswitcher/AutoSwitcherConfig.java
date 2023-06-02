@@ -27,20 +27,18 @@ package net.unethicalite.autoswitcher;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
+
 import java.awt.event.KeyEvent;
 
 @ConfigGroup("autoswitcher")
-public interface AutoSwitcherConfig extends Config
-{
+public interface AutoSwitcherConfig extends Config {
     @ConfigItem(keyName = "hot key", name = "hot key", description = "hot key", position = 1)
-    default String hotKey()
-    {
+    default String hotKey() {
         return KeyEvent.getKeyText(KeyEvent.VK_F10);
     }
 
     @ConfigItem(keyName = "gear set", name = "gear set", description = "Set of gear", position = 2)
-    default String gearSet()
-    {
+    default String gearSet() {
         return "Item1,Item2";
     }
 }

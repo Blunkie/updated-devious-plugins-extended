@@ -53,216 +53,196 @@ import static net.unethicalite.tempoross.TemporossID.NPC_VULN_WHIRLPOOL;
 
 @Extension
 @PluginDescriptor(
-		name = "Unethical Tempoross",
-		enabledByDefault = false
+        name = "Unethical Tempoross",
+        enabledByDefault = false
 )
 @Slf4j
-public class TemporossPlugin extends TaskPlugin
-{
-	private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
+public class TemporossPlugin extends TaskPlugin {
+    private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
 
-	private final Task[] tasks =
-			{
-					new PreGame(this),
-					new DetermineWorkArea(this),
-					new FinishGame(this),
-					new ClearFire(this),
-					new EscapeCloud(this),
-					new GatherTools(this),
-					new AwaitStart(this),
-					new RepairMast(this),
-					new Tether(this),
-					new Untether(this),
-					new Forfeit(this),
-					new CycleState(this),
-					new HandleStates(this)
-			};
+    private final Task[] tasks =
+            {
+                    new PreGame(this),
+                    new DetermineWorkArea(this),
+                    new FinishGame(this),
+                    new ClearFire(this),
+                    new EscapeCloud(this),
+                    new GatherTools(this),
+                    new AwaitStart(this),
+                    new RepairMast(this),
+                    new Tether(this),
+                    new Untether(this),
+                    new Forfeit(this),
+                    new CycleState(this),
+                    new HandleStates(this)
+            };
 
-	@Getter
-	private final TemporossCollisionMap collisionMap = new TemporossCollisionMap(true);
-	@Getter @Setter
-	private int waves = 0;
-	@Getter @Setter
-	private boolean temporossVulnerable = false;
-	@Getter @Setter
-	private TemporossWorkArea workArea = null;
-	@Getter @Setter
-	private NPC fireToClear = null;
-	@Getter @Setter
-	private WorldPoint lastDestination = null;
-	@Getter @Setter
-	private State scriptState = State.INITIAL_CATCH;
-	@Getter @Setter
-	private boolean incomingWave = false;
+    @Getter
+    private final TemporossCollisionMap collisionMap = new TemporossCollisionMap(true);
+    @Getter
+    @Setter
+    private int waves = 0;
+    @Getter
+    @Setter
+    private boolean temporossVulnerable = false;
+    @Getter
+    @Setter
+    private TemporossWorkArea workArea = null;
+    @Getter
+    @Setter
+    private NPC fireToClear = null;
+    @Getter
+    @Setter
+    private WorldPoint lastDestination = null;
+    @Getter
+    @Setter
+    private State scriptState = State.INITIAL_CATCH;
+    @Getter
+    @Setter
+    private boolean incomingWave = false;
 
-	@Inject
-	private Client client;
+    @Inject
+    private Client client;
 
-	public static int energy = 100;
-	public static int intensity = 0;
+    public static int energy = 100;
+    public static int intensity = 0;
 
-	@Override
-	protected void startUp()
-	{
-		scriptState = State.INITIAL_CATCH;
-	}
+    @Override
+    protected void startUp() {
+        scriptState = State.INITIAL_CATCH;
+    }
 
-	@Override
-	public Task[] getTasks()
-	{
-		return tasks;
-	}
+    @Override
+    public Task[] getTasks() {
+        return tasks;
+    }
 
-	public enum State
-	{
-		ATTACK_TEMPOROSS(() -> energy >= 98, null),
-		SECOND_FILL(() -> getAllFish() == 0, ATTACK_TEMPOROSS),
-		THIRD_COOK(() -> getRawFish() == 0 || intensity >= 92, SECOND_FILL),
-		THIRD_CATCH(() -> getAllFish() >= 17, THIRD_COOK),
-		EMERGENCY_FILL(() -> getAllFish() == 0, THIRD_CATCH),
-		INITIAL_FILL(() -> getAllFish() == 0, THIRD_CATCH),
-		SECOND_COOK(() -> getRawFish() == 0, INITIAL_FILL),
-		SECOND_CATCH(() -> getAllFish() >= 17, SECOND_COOK),
-		INITIAL_COOK(() -> getRawFish() == 0, SECOND_CATCH),
-		INITIAL_CATCH(() -> getRawFish() >= 8 || getAllFish() >= 17, INITIAL_COOK);
+    public enum State {
+        ATTACK_TEMPOROSS(() -> energy >= 98, null),
+        SECOND_FILL(() -> getAllFish() == 0, ATTACK_TEMPOROSS),
+        THIRD_COOK(() -> getRawFish() == 0 || intensity >= 92, SECOND_FILL),
+        THIRD_CATCH(() -> getAllFish() >= 17, THIRD_COOK),
+        EMERGENCY_FILL(() -> getAllFish() == 0, THIRD_CATCH),
+        INITIAL_FILL(() -> getAllFish() == 0, THIRD_CATCH),
+        SECOND_COOK(() -> getRawFish() == 0, INITIAL_FILL),
+        SECOND_CATCH(() -> getAllFish() >= 17, SECOND_COOK),
+        INITIAL_COOK(() -> getRawFish() == 0, SECOND_CATCH),
+        INITIAL_CATCH(() -> getRawFish() >= 8 || getAllFish() >= 17, INITIAL_COOK);
 
-		final BooleanSupplier isComplete;
+        final BooleanSupplier isComplete;
 
-		@Getter
-		final State next;
+        @Getter
+        final State next;
 
 
-		State(BooleanSupplier isComplete, State next)
-		{
-			this.isComplete = isComplete;
-			this.next = next;
-		}
-		boolean isCook()
-		{
-			return this == INITIAL_COOK || this == SECOND_COOK || this == THIRD_COOK;
-		}
+        State(BooleanSupplier isComplete, State next) {
+            this.isComplete = isComplete;
+            this.next = next;
+        }
 
-		public boolean isComplete(TemporossConfig config)
-		{
-			return isComplete.getAsBoolean() || (isCook() && !config.cook());
-		}
-	}
+        boolean isCook() {
+            return this == INITIAL_COOK || this == SECOND_COOK || this == THIRD_COOK;
+        }
 
-	@Subscribe
-	private void onGameTick(GameTick e)
-	{
-		NPC doubleSpot = NPCs.getNearest(NPC_DOUBLE_FISH_SPOT);
-		if (scriptState == State.INITIAL_COOK && doubleSpot != null)
-		{
-			scriptState = scriptState.next;
-		}
+        public boolean isComplete(TemporossConfig config) {
+            return isComplete.getAsBoolean() || (isCook() && !config.cook());
+        }
+    }
 
-		if (intensity >= 94 && scriptState == State.THIRD_COOK)
-		{
-			return;
-		}
+    @Subscribe
+    private void onGameTick(GameTick e) {
+        NPC doubleSpot = NPCs.getNearest(NPC_DOUBLE_FISH_SPOT);
+        if (scriptState == State.INITIAL_COOK && doubleSpot != null) {
+            scriptState = scriptState.next;
+        }
 
-		if (scriptState == null)
-		{
-			scriptState = State.THIRD_CATCH;
-		}
+        if (intensity >= 94 && scriptState == State.THIRD_COOK) {
+            return;
+        }
 
-		NPC temporossPool = NPCs.getNearest(NPC_VULN_WHIRLPOOL);
-		if ((temporossPool != null || temporossVulnerable) && scriptState != State.ATTACK_TEMPOROSS)
-		{
-			scriptState = State.ATTACK_TEMPOROSS;
-		}
+        if (scriptState == null) {
+            scriptState = State.THIRD_CATCH;
+        }
 
-		log.debug("Current task: {}, state: {}", getCurrentTask(), scriptState);
-	}
+        NPC temporossPool = NPCs.getNearest(NPC_VULN_WHIRLPOOL);
+        if ((temporossPool != null || temporossVulnerable) && scriptState != State.ATTACK_TEMPOROSS) {
+            scriptState = State.ATTACK_TEMPOROSS;
+        }
 
-	@Subscribe
-	private void onClientTick(ClientTick e)
-	{
-		if (Objects.equals(lastDestination, Players.getLocal().getWorldLocation()))
-		{
-			lastDestination = null;
-			return;
-		}
+        log.debug("Current task: {}, state: {}", getCurrentTask(), scriptState);
+    }
 
-		WorldPoint destination = Movement.getDestination();
-		if (destination != null && (lastDestination == null || !lastDestination.equals(destination)))
-		{
-			lastDestination = destination;
-		}
+    @Subscribe
+    private void onClientTick(ClientTick e) {
+        if (Objects.equals(lastDestination, Players.getLocal().getWorldLocation())) {
+            lastDestination = null;
+            return;
+        }
 
-		Player player = Players.getLocal();
-		List<WorldPoint> path = player.getWorldLocation().pathTo(client, destination);
-		List<NPC> firesBlockingPath = NPCs.getAll(x -> x.getId() == NPC_FIRE &&
-			x.getWorldArea().toWorldPointList().stream().anyMatch(path::contains));
-		NPC fire = firesBlockingPath.stream()
-			.min(Comparator.comparing(x -> x.getWorldLocation().distanceTo(player.getWorldLocation())))
-			.orElse(null);
+        WorldPoint destination = Movement.getDestination();
+        if (destination != null && (lastDestination == null || !lastDestination.equals(destination))) {
+            lastDestination = destination;
+        }
 
-		if (fire != null)
-		{
-			fireToClear = fire;
-		}
+        Player player = Players.getLocal();
+        List<WorldPoint> path = player.getWorldLocation().pathTo(client, destination);
+        List<NPC> firesBlockingPath = NPCs.getAll(x -> x.getId() == NPC_FIRE &&
+                x.getWorldArea().toWorldPointList().stream().anyMatch(path::contains));
+        NPC fire = firesBlockingPath.stream()
+                .min(Comparator.comparing(x -> x.getWorldLocation().distanceTo(player.getWorldLocation())))
+                .orElse(null);
 
-		if (fireToClear != null && client.getCachedNPCs()[fireToClear.getIndex()] == null)
-		{
-			fireToClear = null;
-		}
-	}
+        if (fire != null) {
+            fireToClear = fire;
+        }
 
-	@Subscribe
-	private void onNPCDespawned(NpcDespawned e)
-	{
-		if (e.getNpc() == fireToClear)
-		{
-			fireToClear = null;
-		}
-	}
+        if (fireToClear != null && client.getCachedNPCs()[fireToClear.getIndex()] == null) {
+            fireToClear = null;
+        }
+    }
 
-	@Subscribe
-	public void onChatMessage(ChatMessage event)
-	{
-		ChatMessageType type = event.getType();
-		String message = event.getMessage();
+    @Subscribe
+    private void onNPCDespawned(NpcDespawned e) {
+        if (e.getNpc() == fireToClear) {
+            fireToClear = null;
+        }
+    }
 
-		if (type == ChatMessageType.GAMEMESSAGE)
-		{
-			if (message.equals("<col=d30b0b>A colossal wave closes in...</col>"))
-			{
-				waves++;
-				incomingWave = true;
-			}
+    @Subscribe
+    public void onChatMessage(ChatMessage event) {
+        ChatMessageType type = event.getType();
+        String message = event.getMessage();
 
-			if (message.contains("the rope keeps you securely") || message.contains("the wave slams into you"))
-			{
-				incomingWave = false;
-			}
+        if (type == ChatMessageType.GAMEMESSAGE) {
+            if (message.equals("<col=d30b0b>A colossal wave closes in...</col>")) {
+                waves++;
+                incomingWave = true;
+            }
 
-			if (message.contains("Tempoross is vulnerable!"))
-			{
-				temporossVulnerable = true;
-			}
-		}
-	}
+            if (message.contains("the rope keeps you securely") || message.contains("the wave slams into you")) {
+                incomingWave = false;
+            }
 
-	private static int getRawFish()
-	{
-		return Inventory.getCount(ITEM_RAW_FISH);
-	}
+            if (message.contains("Tempoross is vulnerable!")) {
+                temporossVulnerable = true;
+            }
+        }
+    }
 
-	private static int getCookedFish()
-	{
-		return Inventory.getCount(ITEM_COOKED_FISH);
-	}
+    private static int getRawFish() {
+        return Inventory.getCount(ITEM_RAW_FISH);
+    }
 
-	private static int getAllFish()
-	{
-		return getRawFish() + getCookedFish();
-	}
+    private static int getCookedFish() {
+        return Inventory.getCount(ITEM_COOKED_FISH);
+    }
 
-	@Provides
-	TemporossConfig getConfig(ConfigManager configManager)
-	{
-		return configManager.getConfig(TemporossConfig.class);
-	}
+    private static int getAllFish() {
+        return getRawFish() + getCookedFish();
+    }
+
+    @Provides
+    TemporossConfig getConfig(ConfigManager configManager) {
+        return configManager.getConfig(TemporossConfig.class);
+    }
 }

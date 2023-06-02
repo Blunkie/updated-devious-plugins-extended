@@ -14,47 +14,41 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class BirdHousesPanel extends PluginPanel
-{
-	@Delegate
-	private final BirdHousesPlugin plugin;
+public class BirdHousesPanel extends PluginPanel {
+    @Delegate
+    private final BirdHousesPlugin plugin;
 
-	private final JPanel container = new JPanel();
-	private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+    private final JPanel container = new JPanel();
+    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
-	BirdHousesPanel(BirdHousesPlugin plugin)
-	{
-		this.plugin = plugin;
+    BirdHousesPanel(BirdHousesPlugin plugin) {
+        this.plugin = plugin;
 
-		container.setLayout(new BoxLayout(container, BoxLayout.PAGE_AXIS));
-		add(container);
+        container.setLayout(new BoxLayout(container, BoxLayout.PAGE_AXIS));
+        add(container);
 
-		executorService.scheduleAtFixedRate(() -> SwingUtilities.invokeLater(this::rebuild), 0, 1, TimeUnit.SECONDS);
-	}
+        executorService.scheduleAtFixedRate(() -> SwingUtilities.invokeLater(this::rebuild), 0, 1, TimeUnit.SECONDS);
+    }
 
-	private void rebuild()
-	{
-		container.removeAll();
+    private void rebuild() {
+        container.removeAll();
 
-		container.add(new JLabel("Task: " + (getCurrentTask() != null ? getCurrentTask().getClass().getSimpleName() : "None")));
+        container.add(new JLabel("Task: " + (getCurrentTask() != null ? getCurrentTask().getClass().getSimpleName() : "None")));
 
-		for (BirdHouse birdHouse : getBirdHouses())
-		{
-			container.add(new JLabel(
-					birdHouse.getLocation().toString() + ": "
-							+ (birdHouse.isComplete() ? "Complete" : birdHouse.getTimeLeft().toMinutesPart() + "m " + birdHouse.getTimeLeft().toSecondsPart() + "s")));
-		}
+        for (BirdHouse birdHouse : getBirdHouses()) {
+            container.add(new JLabel(
+                    birdHouse.getLocation().toString() + ": "
+                            + (birdHouse.isComplete() ? "Complete" : birdHouse.getTimeLeft().toMinutesPart() + "m " + birdHouse.getTimeLeft().toSecondsPart() + "s")));
+        }
 
-		repaint();
-		revalidate();
-	}
+        repaint();
+        revalidate();
+    }
 
-	@Subscribe
-	private void onPluginChanged(PluginChanged e)
-	{
-		if (e.getPlugin() == plugin)
-		{
-			executorService.shutdown();
-		}
-	}
+    @Subscribe
+    private void onPluginChanged(PluginChanged e) {
+        if (e.getPlugin() == plugin) {
+            executorService.shutdown();
+        }
+    }
 }

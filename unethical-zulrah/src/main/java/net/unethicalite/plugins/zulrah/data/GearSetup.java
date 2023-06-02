@@ -13,90 +13,72 @@ import java.util.stream.Collectors;
 
 @Getter
 @RequiredArgsConstructor
-public final class GearSetup
-{
-	private final List<String> items;
+public final class GearSetup {
+    private final List<String> items;
 
-	public boolean anyUnequipped()
-	{
-		for (String item : items)
-		{
-			if (Inventory.contains(e -> e.getName().contains(item)))
-			{
-				return true;
-			}
-		}
+    public boolean anyUnequipped() {
+        for (String item : items) {
+            if (Inventory.contains(e -> e.getName().contains(item))) {
+                return true;
+            }
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	public boolean allInInv()
-	{
-		for (String item : items)
-		{
-			if (!Inventory.contains(e -> e.getName().contains(item)))
-			{
-				return false;
-			}
-		}
+    public boolean allInInv() {
+        for (String item : items) {
+            if (!Inventory.contains(e -> e.getName().contains(item))) {
+                return false;
+            }
+        }
 
-		return true;
-	}
+        return true;
+    }
 
-	public boolean hasItem(String item)
-	{
-		return items.stream().anyMatch(x -> x.contains(item));
-	}
+    public boolean hasItem(String item) {
+        return items.stream().anyMatch(x -> x.contains(item));
+    }
 
-	public boolean hasAnyItem(String... item)
-	{
-		for (String i : items)
-		{
-			for (String j : item)
-			{
-				if (i.contains(j))
-				{
-					return true;
-				}
-			}
-		}
+    public boolean hasAnyItem(String... item) {
+        for (String i : items) {
+            for (String j : item) {
+                if (i.contains(j)) {
+                    return true;
+                }
+            }
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	public boolean carryingAllItems()
-	{
-		for (String item : items)
-		{
-			if (!Inventory.contains(e -> e.getName().contains(item)) && !Equipment.contains(e -> e.getName().contains(item)))
-			{
-				return false;
-			}
-		}
+    public boolean carryingAllItems() {
+        for (String item : items) {
+            if (!Inventory.contains(e -> e.getName().contains(item)) && !Equipment.contains(e -> e.getName().contains(item))) {
+                return false;
+            }
+        }
 
-		return true;
-	}
+        return true;
+    }
 
-	public boolean hasExactItem(String item)
-	{
-		return items.stream().anyMatch(x -> x.equals(item));
-	}
+    public boolean hasExactItem(String item) {
+        return items.stream().anyMatch(x -> x.equals(item));
+    }
 
-	public int switchGear(int delay)
-	{
-		List<Item> ordered = Inventory.getAll().stream()
-				.filter(e -> items.stream().anyMatch(g -> e.getName().contains(g)))
-				.sorted(Comparator.comparingInt(e -> e.getSlot() % 4))
-				.collect(Collectors.toList());
+    public int switchGear(int delay) {
+        List<Item> ordered = Inventory.getAll().stream()
+                .filter(e -> items.stream().anyMatch(g -> e.getName().contains(g)))
+                .sorted(Comparator.comparingInt(e -> e.getSlot() % 4))
+                .collect(Collectors.toList());
 
-		for (Item i : ordered)
-		{
-			i.interact(x -> x != null && (x.toLowerCase().contains("wear")
-					|| x.toLowerCase().contains("wield")
-					|| x.toLowerCase().contains("equip")));
-			Time.sleep(delay);
-		}
+        for (Item i : ordered) {
+            i.interact(x -> x != null && (x.toLowerCase().contains("wear")
+                    || x.toLowerCase().contains("wield")
+                    || x.toLowerCase().contains("equip")));
+            Time.sleep(delay);
+        }
 
-		return 50;
-	}
+        return 50;
+    }
 }

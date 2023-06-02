@@ -16,105 +16,87 @@ import javax.inject.Inject;
 
 @Extension
 @PluginDescriptor(
-		name = "Unethical Bankpin",
-		enabledByDefault = false
+        name = "Unethical Bankpin",
+        enabledByDefault = false
 )
-public class UnethicalBankPinPlugin extends Plugin
-{
-	private static final WidgetInfo[] BANK_PIN_NUMBERS =
-			{
-					WidgetInfo.BANK_PIN_10,
-					WidgetInfo.BANK_PIN_1,
-					WidgetInfo.BANK_PIN_2,
-					WidgetInfo.BANK_PIN_3,
-					WidgetInfo.BANK_PIN_4,
-					WidgetInfo.BANK_PIN_5,
-					WidgetInfo.BANK_PIN_6,
-					WidgetInfo.BANK_PIN_7,
-					WidgetInfo.BANK_PIN_8,
-					WidgetInfo.BANK_PIN_9,
-			};
+public class UnethicalBankPinPlugin extends Plugin {
+    private static final WidgetInfo[] BANK_PIN_NUMBERS =
+            {
+                    WidgetInfo.BANK_PIN_10,
+                    WidgetInfo.BANK_PIN_1,
+                    WidgetInfo.BANK_PIN_2,
+                    WidgetInfo.BANK_PIN_3,
+                    WidgetInfo.BANK_PIN_4,
+                    WidgetInfo.BANK_PIN_5,
+                    WidgetInfo.BANK_PIN_6,
+                    WidgetInfo.BANK_PIN_7,
+                    WidgetInfo.BANK_PIN_8,
+                    WidgetInfo.BANK_PIN_9,
+            };
 
-	@Inject
-	private UnethicalBankPinConfig config;
+    @Inject
+    private UnethicalBankPinConfig config;
 
-	@Inject
-	private Client client;
+    @Inject
+    private Client client;
 
-	@Subscribe
-	private void onScriptEvent(ScriptPostFired e)
-	{
-		if (e.getScriptId() != 683)
-		{
-			return;
-		}
+    @Subscribe
+    private void onScriptEvent(ScriptPostFired e) {
+        if (e.getScriptId() != 683) {
+            return;
+        }
 
-		Widget bankPinContainer = Widgets.get(WidgetInfo.BANK_PIN_CONTAINER);
-		if (!Widgets.isVisible(bankPinContainer))
-		{
-			return;
-		}
+        Widget bankPinContainer = Widgets.get(WidgetInfo.BANK_PIN_CONTAINER);
+        if (!Widgets.isVisible(bankPinContainer)) {
+            return;
+        }
 
-		String pin = config.pin();
-		if (!pin.matches("\\d{4}"))
-		{
-			return;
-		}
+        String pin = config.pin();
+        if (!pin.matches("\\d{4}")) {
+            return;
+        }
 
-		String[] pinSplit = pin.split("");
-		Widget first = Widgets.get(WidgetInfo.BANK_PIN_FIRST_ENTERED);
-		Widget second = Widgets.get(WidgetInfo.BANK_PIN_SECOND_ENTERED);
-		Widget third = Widgets.get(WidgetInfo.BANK_PIN_THIRD_ENTERED);
-		Widget fourth = Widgets.get(WidgetInfo.BANK_PIN_FOURTH_ENTERED);
+        String[] pinSplit = pin.split("");
+        Widget first = Widgets.get(WidgetInfo.BANK_PIN_FIRST_ENTERED);
+        Widget second = Widgets.get(WidgetInfo.BANK_PIN_SECOND_ENTERED);
+        Widget third = Widgets.get(WidgetInfo.BANK_PIN_THIRD_ENTERED);
+        Widget fourth = Widgets.get(WidgetInfo.BANK_PIN_FOURTH_ENTERED);
 
-		if (first.getText().equals("?"))
-		{
-			int number = Integer.parseInt(pinSplit[0]);
-			clickNumber(client, number);
-		}
-		else if (second.getText().equals("?"))
-		{
-			int number = Integer.parseInt(pinSplit[1]);
-			clickNumber(client, number);
-		}
-		else if (third.getText().equals("?"))
-		{
-			int number = Integer.parseInt(pinSplit[2]);
-			clickNumber(client, number);
-		}
-		else if (fourth.getText().equals("?"))
-		{
-			int number = Integer.parseInt(pinSplit[3]);
-			clickNumber(client, number);
-		}
-	}
+        if (first.getText().equals("?")) {
+            int number = Integer.parseInt(pinSplit[0]);
+            clickNumber(client, number);
+        } else if (second.getText().equals("?")) {
+            int number = Integer.parseInt(pinSplit[1]);
+            clickNumber(client, number);
+        } else if (third.getText().equals("?")) {
+            int number = Integer.parseInt(pinSplit[2]);
+            clickNumber(client, number);
+        } else if (fourth.getText().equals("?")) {
+            int number = Integer.parseInt(pinSplit[3]);
+            clickNumber(client, number);
+        }
+    }
 
-	private static void clickNumber(Client client, int number)
-	{
-		for (WidgetInfo widgetInfo : BANK_PIN_NUMBERS)
-		{
-			Widget numberBox = Widgets.get(widgetInfo);
-			if (!Widgets.isVisible(numberBox))
-			{
-				continue;
-			}
+    private static void clickNumber(Client client, int number) {
+        for (WidgetInfo widgetInfo : BANK_PIN_NUMBERS) {
+            Widget numberBox = Widgets.get(widgetInfo);
+            if (!Widgets.isVisible(numberBox)) {
+                continue;
+            }
 
-			if (numberBox.getChildren() == null || numberBox.getChildren().length < 2)
-			{
-				continue;
-			}
+            if (numberBox.getChildren() == null || numberBox.getChildren().length < 2) {
+                continue;
+            }
 
-			if (numberBox.getChild(1).getText().equals(String.valueOf(number)))
-			{
-				client.invokeWidgetAction(1, numberBox.getChild(0).getId(), 0, -1, "Select");
-				break;
-			}
-		}
-	}
+            if (numberBox.getChild(1).getText().equals(String.valueOf(number))) {
+                client.invokeWidgetAction(1, numberBox.getChild(0).getId(), 0, -1, "Select");
+                break;
+            }
+        }
+    }
 
-	@Provides
-	UnethicalBankPinConfig provideConfig(ConfigManager configManager)
-	{
-		return configManager.getConfig(UnethicalBankPinConfig.class);
-	}
+    @Provides
+    UnethicalBankPinConfig provideConfig(ConfigManager configManager) {
+        return configManager.getConfig(UnethicalBankPinConfig.class);
+    }
 }

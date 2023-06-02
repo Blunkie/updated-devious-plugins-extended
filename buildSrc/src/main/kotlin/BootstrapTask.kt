@@ -91,17 +91,22 @@ open class BootstrapTask : DefaultTask() {
                             break
                         }
 
-                        plugins.add(JsonMerger(arrayMergeMode = JsonMerger.ArrayMergeMode.MERGE_ARRAY).merge(item, pluginObject))
+                        plugins.add(
+                            JsonMerger(arrayMergeMode = JsonMerger.ArrayMergeMode.MERGE_ARRAY).merge(
+                                item,
+                                pluginObject
+                            )
+                        )
                         pluginAdded = true
                     }
 
-                    if (!pluginAdded)
-                    {
+                    if (!pluginAdded) {
                         plugins.add(pluginObject)
                     }
 
                     plugin.copyTo(
-                        Paths.get(bootstrapReleaseDir.toString(), "${it.project.name}-${it.project.version}.jar").toFile(),
+                        Paths.get(bootstrapReleaseDir.toString(), "${it.project.name}-${it.project.version}.jar")
+                            .toFile(),
                         overwrite = true
                     )
                 }

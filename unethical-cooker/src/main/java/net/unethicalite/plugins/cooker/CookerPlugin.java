@@ -13,33 +13,30 @@ import org.pf4j.Extension;
 
 @Extension
 @PluginDescriptor(
-		name = "Unethical Cooker",
-		enabledByDefault = false
+        name = "Unethical Cooker",
+        enabledByDefault = false
 )
-public class CookerPlugin extends TaskPlugin
-{
-	private final Task[] tasks =
-			{
-					new Cook(this)
-			};
+public class CookerPlugin extends TaskPlugin {
+    private final Task[] tasks =
+            {
+                    new Cook(this)
+            };
 
-	@Inject
-	@Getter
-	private CookerConfig config;
+    @Inject
+    @Getter
+    private CookerConfig config;
 
-	@Inject
-	@Getter
-	private Client client;
+    @Inject
+    @Getter
+    private Client client;
 
-	@Override
-	public Task[] getTasks()
-	{
-		return tasks;
-	}
+    @Override
+    public Task[] getTasks() {
+        return tasks;
+    }
 
-	@Provides
-	CookerConfig provideConfig(ConfigManager configManager)
-	{
-		return configManager.getConfig(CookerConfig.class);
-	}
+    @Provides
+    CookerConfig provideConfig(ConfigManager configManager) {
+        return configManager.getConfig(CookerConfig.class);
+    }
 }

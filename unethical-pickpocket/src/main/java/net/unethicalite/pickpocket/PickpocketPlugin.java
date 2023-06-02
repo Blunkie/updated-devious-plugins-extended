@@ -34,165 +34,139 @@ import java.util.Objects;
 @PluginDescriptor(name = "Unethical Pickpocket", enabledByDefault = false)
 @Extension
 @Slf4j
-public class PickpocketPlugin extends LoopedPlugin
-{
-	@Inject
-	private PickpocketConfig config;
+public class PickpocketPlugin extends LoopedPlugin {
+    @Inject
+    private PickpocketConfig config;
 
-	private WorldPoint lastNpcPosition = null;
+    private WorldPoint lastNpcPosition = null;
 
-	private int maxPouches = 5;
+    private int maxPouches = 5;
 
-	@Override
-	protected int loop()
-	{
-		Item junk = Inventory.getFirst(item -> shouldDrop(Text.fromCSV(config.junk()), item.getName()));
-		if (junk != null)
-		{
-			junk.interact("Drop");
-			log.debug("Dropping junk");
-			return -1;
-		}
+    @Override
+    protected int loop() {
+        Item junk = Inventory.getFirst(item -> shouldDrop(Text.fromCSV(config.junk()), item.getName()));
+        if (junk != null) {
+            junk.interact("Drop");
+            log.debug("Dropping junk");
+            return -1;
+        }
 
-		Item pouch = Inventory.getFirst("Coin pouch");
-		if (pouch != null && pouch.getQuantity() >= maxPouches && !Inventory.isFull())
-		{
-			pouch.interact("Open-all");
-			maxPouches = Rand.nextInt(1, 29);
-			log.debug("Opening pouches");
-			return -1;
-		}
+        Item pouch = Inventory.getFirst("Coin pouch");
+        if (pouch != null && pouch.getQuantity() >= maxPouches && !Inventory.isFull()) {
+            pouch.interact("Open-all");
+            maxPouches = Rand.nextInt(1, 29);
+            log.debug("Opening pouches");
+            return -1;
+        }
 
-		if (config.eat())
-		{
-			if (Combat.getMissingHealth() >= config.eatHp())
-			{
-				Item food = Inventory.getFirst(config.foodName());
-				if (food != null)
-				{
-					food.interact(1);
-					log.debug("Eating food");
-					return -2;
-				}
-			}
-		}
-		
-		if (Bank.isOpen())
-		{
-			List<Item> unneeded = Inventory.getAll(item ->
-					(!config.eat() || !Objects.equals(item.getName(), config.foodName()))
-							&& item.getId() != ItemID.COINS_995
-							&& !Objects.equals(item.getName(), "Coin pouch")
-			);
-			if (!unneeded.isEmpty())
-			{
-				for (Item item : unneeded)
-				{
-					Bank.depositAll(item.getId());
-					Time.sleep(100);
-				}
+        if (config.eat()) {
+            if (Combat.getMissingHealth() >= config.eatHp()) {
+                Item food = Inventory.getFirst(config.foodName());
+                if (food != null) {
+                    food.interact(1);
+                    log.debug("Eating food");
+                    return -2;
+                }
+            }
+        }
 
-				return -1;
-			}
+        if (Bank.isOpen()) {
+            List<Item> unneeded = Inventory.getAll(item ->
+                    (!config.eat() || !Objects.equals(item.getName(), config.foodName()))
+                            && item.getId() != ItemID.COINS_995
+                            && !Objects.equals(item.getName(), "Coin pouch")
+            );
+            if (!unneeded.isEmpty()) {
+                for (Item item : unneeded) {
+                    Bank.depositAll(item.getId());
+                    Time.sleep(100);
+                }
 
-			if (config.eat())
-			{
-				if (Inventory.getCount(config.foodName()) > config.foodAmount())
-				{
-					Bank.depositAll(config.foodName());
-					return -2;
-				}
+                return -1;
+            }
 
-				if (!Inventory.contains(config.foodName()))
-				{
-					Bank.withdraw(config.foodName(), config.foodAmount(), Bank.WithdrawMode.ITEM);
-					log.debug("Withdrawing food");
-					return -2;
-				}
-			}
-		}
+            if (config.eat()) {
+                if (Inventory.getCount(config.foodName()) > config.foodAmount()) {
+                    Bank.depositAll(config.foodName());
+                    return -2;
+                }
 
-		if (config.bank() && (Inventory.isFull() || !Inventory.contains(config.foodName())))
-		{
-			if (Movement.isWalking())
-			{
-				return -4;
-			}
+                if (!Inventory.contains(config.foodName())) {
+                    Bank.withdraw(config.foodName(), config.foodAmount(), Bank.WithdrawMode.ITEM);
+                    log.debug("Withdrawing food");
+                    return -2;
+                }
+            }
+        }
 
-			TileObject bank = TileObjects.within(config.bankLocation().getArea().offset(2), obj -> obj.hasAction("Collect"))
-					.stream()
-					.min(Comparator.comparingInt(obj -> obj.distanceTo(Players.getLocal())))
-					.orElse(null);
-			if (bank != null)
-			{
-				bank.interact("Bank", "Use");
-				return -4;
-			}
+        if (config.bank() && (Inventory.isFull() || !Inventory.contains(config.foodName()))) {
+            if (Movement.isWalking()) {
+                return -4;
+            }
 
-			NPC banker = NPCs.getNearest("Banker");
-			if (banker != null)
-			{
-				banker.interact("Bank");
-				return -4;
-			}
+            TileObject bank = TileObjects.within(config.bankLocation().getArea().offset(2), obj -> obj.hasAction("Collect"))
+                    .stream()
+                    .min(Comparator.comparingInt(obj -> obj.distanceTo(Players.getLocal())))
+                    .orElse(null);
+            if (bank != null) {
+                bank.interact("Bank", "Use");
+                return -4;
+            }
 
-			Movement.walkTo(config.bankLocation());
-			return -4;
-		}
+            NPC banker = NPCs.getNearest("Banker");
+            if (banker != null) {
+                banker.interact("Bank");
+                return -4;
+            }
 
-		NPC target = NPCs.getNearest(config.npcName());
-		if (target != null)
-		{
-			lastNpcPosition = target.getWorldLocation();
-			if (!Reachable.isInteractable(target))
-			{
-				if (Movement.isWalking())
-				{
-					return -4;
-				}
+            Movement.walkTo(config.bankLocation());
+            return -4;
+        }
 
-				Movement.walkTo(target);
-				return -4;
-			}
+        NPC target = NPCs.getNearest(config.npcName());
+        if (target != null) {
+            lastNpcPosition = target.getWorldLocation();
+            if (!Reachable.isInteractable(target)) {
+                if (Movement.isWalking()) {
+                    return -4;
+                }
 
-			Player local = Players.getLocal();
-			if (local.getGraphic() == 245 && !Dialog.isOpen())
-			{
-				return -1;
-			}
+                Movement.walkTo(target);
+                return -4;
+            }
 
-			if (local.isMoving() && target.distanceTo(local) > 3)
-			{
-				return -1;
-			}
+            Player local = Players.getLocal();
+            if (local.getGraphic() == 245 && !Dialog.isOpen()) {
+                return -1;
+            }
 
-			target.interact("Pickpocket");
-			return Rand.nextInt(222, 333);
-		}
+            if (local.isMoving() && target.distanceTo(local) > 3) {
+                return -1;
+            }
 
-		if (Movement.isWalking())
-		{
-			return -4;
-		}
+            target.interact("Pickpocket");
+            return Rand.nextInt(222, 333);
+        }
 
-		if (lastNpcPosition != null)
-		{
-			Movement.walkTo(lastNpcPosition);
-			return -4;
-		}
+        if (Movement.isWalking()) {
+            return -4;
+        }
 
-		log.info("Idle");
-		return -1;
-	}
+        if (lastNpcPosition != null) {
+            Movement.walkTo(lastNpcPosition);
+            return -4;
+        }
 
-	@Provides
-	PickpocketConfig getConfig(ConfigManager configManager)
-	{
-		return configManager.getConfig(PickpocketConfig.class);
-	}
+        log.info("Idle");
+        return -1;
+    }
 
-	private boolean shouldDrop(List<String> itemNames, String itemName)
-	{
-		return itemNames.stream().anyMatch(name -> WildcardMatcher.matches(name, itemName));
-	}
+    @Provides
+    PickpocketConfig getConfig(ConfigManager configManager) {
+        return configManager.getConfig(PickpocketConfig.class);
+    }
+
+    private boolean shouldDrop(List<String> itemNames, String itemName) {
+        return itemNames.stream().anyMatch(name -> WildcardMatcher.matches(name, itemName));
+    }
 }

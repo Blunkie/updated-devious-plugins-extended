@@ -5,12 +5,10 @@ import lombok.RequiredArgsConstructor;
 import net.runelite.api.Prayer;
 
 @RequiredArgsConstructor
-public enum RangePrayer
-{
-	RIGOUR(Prayer.RIGOUR),
-	EAGLE_EYE(Prayer.EAGLE_EYE)
-	;
+public enum RangePrayer {
+    RIGOUR(Prayer.RIGOUR),
+    EAGLE_EYE(Prayer.EAGLE_EYE);
 
-	@Getter
-	private final Prayer prayer;
+    @Getter
+    private final Prayer prayer;
 }

@@ -35,6 +35,7 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.unethicalite.api.items.Inventory;
 import org.pf4j.Extension;
+
 import javax.inject.Inject;
 import java.awt.event.KeyEvent;
 
@@ -51,8 +52,7 @@ import java.awt.event.KeyEvent;
                 }
 )
 @Slf4j
-public class AutoSwitcherPlugin extends Plugin implements net.runelite.client.input.KeyListener
-{
+public class AutoSwitcherPlugin extends Plugin implements net.runelite.client.input.KeyListener {
     @Inject
     private Client client;
 
@@ -66,50 +66,42 @@ public class AutoSwitcherPlugin extends Plugin implements net.runelite.client.in
     private AutoSwitcherConfig config;
 
     @Provides
-    private AutoSwitcherConfig provideConfig(ConfigManager configManager)
-    {
+    private AutoSwitcherConfig provideConfig(ConfigManager configManager) {
         return configManager.getConfig(AutoSwitcherConfig.class);
     }
 
     @Override
-    protected void startUp()
-    {
+    protected void startUp() {
         keyManager.registerKeyListener(this);
     }
 
     @Override
-    protected void shutDown()
-    {
+    protected void shutDown() {
         keyManager.unregisterKeyListener(this);
     }
 
     @Override
-    public void keyPressed(KeyEvent e)
-    {
-        if (client.getGameState() != GameState.LOGGED_IN)
-        {
+    public void keyPressed(KeyEvent e) {
+        if (client.getGameState() != GameState.LOGGED_IN) {
             return;
         }
 
-        if (KeyEvent.getKeyText(e.getKeyCode()).equalsIgnoreCase(config.hotKey()))
-        {
+        if (KeyEvent.getKeyText(e.getKeyCode()).equalsIgnoreCase(config.hotKey())) {
             clientThread.invoke(() ->
             {
-              log.info("Switch items: {}", config.gearSet());
-              Inventory.getAll(config.gearSet().split(","))
-                      .stream()
-                      .forEach(i -> i.interact(x -> x != null && (x.toLowerCase().contains("wear")
-                              || x.toLowerCase().contains("wield")
-                              || x.toLowerCase().contains("equip"))));
+                log.info("Switch items: {}", config.gearSet());
+                Inventory.getAll(config.gearSet().split(","))
+                        .stream()
+                        .forEach(i -> i.interact(x -> x != null && (x.toLowerCase().contains("wear")
+                                || x.toLowerCase().contains("wield")
+                                || x.toLowerCase().contains("equip"))));
             });
         }
     }
 
-    public void keyReleased(KeyEvent e)
-    {
+    public void keyReleased(KeyEvent e) {
     }
 
-    public void keyTyped(KeyEvent e)
-    {
+    public void keyTyped(KeyEvent e) {
     }
 }

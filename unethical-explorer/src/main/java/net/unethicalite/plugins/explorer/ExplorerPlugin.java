@@ -35,259 +35,216 @@ import java.util.regex.Pattern;
 
 @Extension
 @PluginDescriptor(
-		name = "Unethical Explorer",
-		description = "Right click anywhere within the World Map to walk there",
-		enabledByDefault = false
+        name = "Unethical Explorer",
+        description = "Right click anywhere within the World Map to walk there",
+        enabledByDefault = false
 )
 @Singleton
 @Slf4j
-public class ExplorerPlugin extends LoopedPlugin
-{
-	private static final Pattern WORLD_POINT_PATTERN = Pattern.compile("^\\d{4,5} \\d{4,5} \\d$");
+public class ExplorerPlugin extends LoopedPlugin {
+    private static final Pattern WORLD_POINT_PATTERN = Pattern.compile("^\\d{4,5} \\d{4,5} \\d$");
 
-	@Inject
-	private Client client;
+    @Inject
+    private Client client;
 
-	@Inject
-	private ExplorerConfig config;
+    @Inject
+    private ExplorerConfig config;
 
-	private WorldPoint destination;
+    private WorldPoint destination;
 
-	@Inject
-	private KeyManager keyManager;
+    @Inject
+    private KeyManager keyManager;
 
-	@Inject
-	private WorldMapPointManager worldMapPointManager;
+    @Inject
+    private WorldMapPointManager worldMapPointManager;
 
-	@Override
-	protected void startUp()
-	{
-		keyManager.registerKeyListener(hotkeyListener);
-	}
+    @Override
+    protected void startUp() {
+        keyManager.registerKeyListener(hotkeyListener);
+    }
 
-	@Override
-	public void shutDown()
-	{
-		destination = null;
-		keyManager.unregisterKeyListener(hotkeyListener);
+    @Override
+    public void shutDown() {
+        destination = null;
+        keyManager.unregisterKeyListener(hotkeyListener);
 
-	}
+    }
 
-	private final HotkeyListener hotkeyListener = new HotkeyListener(() -> config.toggleKeyBind())
-	{
-		@Override
-		public void hotkeyPressed()
-		{
-			// If the hotkey is pressed and there is currently a destination, stop walking
-			if (destination != null)
-			{
-				destination = null;
-			}
-			else
-			{
-				WorldPoint location = null;
+    private final HotkeyListener hotkeyListener = new HotkeyListener(() -> config.toggleKeyBind()) {
+        @Override
+        public void hotkeyPressed() {
+            // If the hotkey is pressed and there is currently a destination, stop walking
+            if (destination != null) {
+                destination = null;
+            } else {
+                WorldPoint location = null;
 
-				switch (config.category())
-				{
-					case QUEST:
-						WorldPoint questLocation = getWorldPointLocation("Quest Helper");
-						if (questLocation != null)
-						{
-							location = questLocation;
-						}
-						break;
-					case CLUE:
-						WorldPoint clueLocation = getWorldPointLocation("Clue Scroll");
-						if (clueLocation != null)
-						{
-							location = clueLocation;
-						}
-						break;
-					case BANKS:
-						location = config.bankLocation().getArea().getCenter();
-						break;
-					case CUSTOM:
-						String coords = config.coords();
-						if (!WORLD_POINT_PATTERN.matcher(coords).matches())
-						{
-							return;
-						}
-						String[] split = coords.split(" ");
-						location = new WorldPoint(Integer.parseInt(split[0]), Integer.parseInt(split[1]), Integer.parseInt(split[2]));
-						break;
-				}
-				if (location != null)
-				{
-					setDestination(location);
-				}
-				else
-				{
-					MessageUtils.addMessage("Invalid Selection");
-				}
-			}
-		}
-	};
+                switch (config.category()) {
+                    case QUEST:
+                        WorldPoint questLocation = getWorldPointLocation("Quest Helper");
+                        if (questLocation != null) {
+                            location = questLocation;
+                        }
+                        break;
+                    case CLUE:
+                        WorldPoint clueLocation = getWorldPointLocation("Clue Scroll");
+                        if (clueLocation != null) {
+                            location = clueLocation;
+                        }
+                        break;
+                    case BANKS:
+                        location = config.bankLocation().getArea().getCenter();
+                        break;
+                    case CUSTOM:
+                        String coords = config.coords();
+                        if (!WORLD_POINT_PATTERN.matcher(coords).matches()) {
+                            return;
+                        }
+                        String[] split = coords.split(" ");
+                        location = new WorldPoint(Integer.parseInt(split[0]), Integer.parseInt(split[1]), Integer.parseInt(split[2]));
+                        break;
+                }
+                if (location != null) {
+                    setDestination(location);
+                } else {
+                    MessageUtils.addMessage("Invalid Selection");
+                }
+            }
+        }
+    };
 
-	@Subscribe
-	public void onMenuOpened(MenuOpened event)
-	{
-		if (destination != null)
-		{
-			client.createMenuEntry(1)
-					.setOption("<col=00ff00>Explorer:</col>")
-					.setTarget("Cancel walking")
-					.setType(MenuAction.RUNELITE)
-					.onClick(e -> destination = null);
-			return;
-		}
+    @Subscribe
+    public void onMenuOpened(MenuOpened event) {
+        if (destination != null) {
+            client.createMenuEntry(1)
+                    .setOption("<col=00ff00>Explorer:</col>")
+                    .setTarget("Cancel walking")
+                    .setType(MenuAction.RUNELITE)
+                    .onClick(e -> destination = null);
+            return;
+        }
 
-		Widget worldMap = Widgets.get(WidgetInfo.WORLD_MAP_VIEW);
-		if (worldMap == null)
-		{
-			return;
-		}
+        Widget worldMap = Widgets.get(WidgetInfo.WORLD_MAP_VIEW);
+        if (worldMap == null) {
+            return;
+        }
 
-		WorldPoint mouse = client.getRenderOverview().getMouseLocation();
-		if (mouse == null)
-		{
-			return;
-		}
+        WorldPoint mouse = client.getRenderOverview().getMouseLocation();
+        if (mouse == null) {
+            return;
+        }
 
-		client.createMenuEntry(1)
-				.setOption("<col=00ff00>Explorer:</col>")
-				.setTarget("Walk here")
-				.setType(MenuAction.RUNELITE)
-				.onClick(e ->
-				{
-					setDestination(mouse);
+        client.createMenuEntry(1)
+                .setOption("<col=00ff00>Explorer:</col>")
+                .setTarget("Walk here")
+                .setType(MenuAction.RUNELITE)
+                .onClick(e ->
+                {
+                    setDestination(mouse);
 
-					if (config.closeMap())
-						closeWorldMap();
-				});
-	}
+                    if (config.closeMap())
+                        closeWorldMap();
+                });
+    }
 
-	@Subscribe
-	public void onConfigButtonClicked(ConfigButtonClicked e)
-	{
-		if (!"unethicalexplorer".equals(e.getGroup()) || !"walk".equals(e.getKey()))
-		{
-			return;
-		}
+    @Subscribe
+    public void onConfigButtonClicked(ConfigButtonClicked e) {
+        if (!"unethicalexplorer".equals(e.getGroup()) || !"walk".equals(e.getKey())) {
+            return;
+        }
 
-		WorldPoint location = null;
+        WorldPoint location = null;
 
-		switch (config.category())
-		{
-			case QUEST:
-				WorldPoint questLocation = getWorldPointLocation("Quest Helper");
-				if (questLocation != null)
-				{
-					location = questLocation;
-				}
-				break;
-			case CLUE:
-				WorldPoint clueLocation = getWorldPointLocation("Clue Scroll");
-				if (clueLocation != null)
-				{
-					location = clueLocation;
-				}
-				break;
-			case BANKS:
-				location = config.bankLocation().getArea().getCenter();
-				break;
-			case CUSTOM:
-				String coords = config.coords();
-				if (!WORLD_POINT_PATTERN.matcher(coords).matches())
-				{
-					return;
-				}
-				String[] split = coords.split(" ");
-				location = new WorldPoint(Integer.parseInt(split[0]), Integer.parseInt(split[1]), Integer.parseInt(split[2]));
-				break;
-		}
-		if (location != null)
-		{
-			setDestination(location);
-		}
-		else
-		{
-			MessageUtils.addMessage("Invalid Selection");
-		}
-	}
+        switch (config.category()) {
+            case QUEST:
+                WorldPoint questLocation = getWorldPointLocation("Quest Helper");
+                if (questLocation != null) {
+                    location = questLocation;
+                }
+                break;
+            case CLUE:
+                WorldPoint clueLocation = getWorldPointLocation("Clue Scroll");
+                if (clueLocation != null) {
+                    location = clueLocation;
+                }
+                break;
+            case BANKS:
+                location = config.bankLocation().getArea().getCenter();
+                break;
+            case CUSTOM:
+                String coords = config.coords();
+                if (!WORLD_POINT_PATTERN.matcher(coords).matches()) {
+                    return;
+                }
+                String[] split = coords.split(" ");
+                location = new WorldPoint(Integer.parseInt(split[0]), Integer.parseInt(split[1]), Integer.parseInt(split[2]));
+                break;
+        }
+        if (location != null) {
+            setDestination(location);
+        } else {
+            MessageUtils.addMessage("Invalid Selection");
+        }
+    }
 
-	private void setDestination(WorldPoint wp)
-	{
-		destination = wp;
-		log.debug("Walking to {}", destination);
-	}
+    private void setDestination(WorldPoint wp) {
+        destination = wp;
+        log.debug("Walking to {}", destination);
+    }
 
-	private void closeWorldMap()
-	{
-		Widget closeWorldMap = Widgets.get(WidgetID.WORLD_MAP_GROUP_ID, closeButton -> closeButton.hasAction("Close"));
-		if (closeWorldMap != null && closeWorldMap.isVisible())
-		{
-			closeWorldMap.interact("Close");
-		}
-	}
+    private void closeWorldMap() {
+        Widget closeWorldMap = Widgets.get(WidgetID.WORLD_MAP_GROUP_ID, closeButton -> closeButton.hasAction("Close"));
+        if (closeWorldMap != null && closeWorldMap.isVisible()) {
+            closeWorldMap.interact("Close");
+        }
+    }
 
-	@Override
-	protected int loop()
-	{
-		if (!Game.isLoggedIn() || client.getLocalPlayer() == null)
-		{
-			return -1;
-		}
+    @Override
+    protected int loop() {
+        if (!Game.isLoggedIn() || client.getLocalPlayer() == null) {
+            return -1;
+        }
 
-		if (Movement.isWalking())
-		{
-			return -4;
-		}
+        if (Movement.isWalking()) {
+            return -4;
+        }
 
-		if (destination == null
-				|| destination.distanceTo(Players.getLocal().getWorldLocation()) <= 2
-				|| Objects.equals(Movement.getDestination(), destination)
-		)
-		{
-			destination = null;
-			return -1;
-		}
+        if (destination == null
+                || destination.distanceTo(Players.getLocal().getWorldLocation()) <= 2
+                || Objects.equals(Movement.getDestination(), destination)
+        ) {
+            destination = null;
+            return -1;
+        }
 
-		Movement.walkTo(destination);
-		return -4;
-	}
+        Movement.walkTo(destination);
+        return -4;
+    }
 
-	private WorldPoint getWorldPointLocation(String name)
-	{
-		List<?> mapPoints = new ArrayList<>();
-		try
-		{
-			Field privateField = worldMapPointManager.getClass().getDeclaredField("worldMapPoints");
-			privateField.setAccessible(true);
-			mapPoints = (List<?>) privateField.get(worldMapPointManager);
-		}
-		catch (Exception e)
-		{
-			log.info("Error: ", e);
-		}
+    private WorldPoint getWorldPointLocation(String name) {
+        List<?> mapPoints = new ArrayList<>();
+        try {
+            Field privateField = worldMapPointManager.getClass().getDeclaredField("worldMapPoints");
+            privateField.setAccessible(true);
+            mapPoints = (List<?>) privateField.get(worldMapPointManager);
+        } catch (Exception e) {
+            log.info("Error: ", e);
+        }
 
-		for (Object mapPoint : mapPoints)
-		{
-			if (mapPoint instanceof WorldMapPoint)
-			{
-				final WorldMapPoint point = (WorldMapPoint) mapPoint;
-				if (point.getName() != null && point.getName().equals(name))
-				{
-					return point.getWorldPoint();
-				}
-			}
+        for (Object mapPoint : mapPoints) {
+            if (mapPoint instanceof WorldMapPoint) {
+                final WorldMapPoint point = (WorldMapPoint) mapPoint;
+                if (point.getName() != null && point.getName().equals(name)) {
+                    return point.getWorldPoint();
+                }
+            }
 
-		}
-		return null;
-	}
+        }
+        return null;
+    }
 
-	@Provides
-	ExplorerConfig provideConfig(ConfigManager configManager)
-	{
-		return configManager.getConfig(ExplorerConfig.class);
-	}
+    @Provides
+    ExplorerConfig provideConfig(ConfigManager configManager) {
+        return configManager.getConfig(ExplorerConfig.class);
+    }
 }

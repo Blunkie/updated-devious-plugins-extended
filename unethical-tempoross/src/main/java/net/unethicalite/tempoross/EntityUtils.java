@@ -9,28 +9,24 @@ import net.unethicalite.api.entities.TileObjects;
 
 import java.util.function.Predicate;
 
-public class EntityUtils
-{
-	public static TileObject getSafeObject(WorldPoint tile, Predicate<TileObject> filter)
-	{
-		return TileObjects.getFirstAt(tile, t ->
-		{
-			if (!filter.test(t))
-			{
-				return false;
-			}
+public class EntityUtils {
+    public static TileObject getSafeObject(WorldPoint tile, Predicate<TileObject> filter) {
+        return TileObjects.getFirstAt(tile, t ->
+        {
+            if (!filter.test(t)) {
+                return false;
+            }
 
-			NPC nearestFire = getNearestFire(t);
-			return nearestFire == null || nearestFire.distanceTo(t) > 1;
-		});
-	}
+            NPC nearestFire = getNearestFire(t);
+            return nearestFire == null || nearestFire.distanceTo(t) > 1;
+        });
+    }
 
-	public static NPC getNearestFire(SceneEntity entity)
-	{
-		return NPCs.query()
-				.ids(TemporossID.NPC_FIRE)
-				.distance(entity, 3)
-				.results()
-				.nearest(entity);
-	}
+    public static NPC getNearestFire(SceneEntity entity) {
+        return NPCs.query()
+                .ids(TemporossID.NPC_FIRE)
+                .distance(entity, 3)
+                .results()
+                .nearest(entity);
+    }
 }

@@ -3,8 +3,7 @@ package net.unethicalite.plugins.explorer.util;
 import lombok.Getter;
 
 @Getter
-public enum Category
-{
+public enum Category {
     QUEST("Quest"),
     CLUE("Clue"),
     BANKS("Banks"),
@@ -12,8 +11,7 @@ public enum Category
 
     private final String name;
 
-    Category(String name)
-    {
+    Category(String name) {
         this.name = name;
     }
 }

@@ -45,170 +45,149 @@ import java.util.stream.Collectors;
 @Extension
 @PluginDescriptor(name = "Unethical Bird Houses", enabledByDefault = false)
 @Slf4j
-public class BirdHousesPlugin extends TaskPlugin
-{
-	private static final int FIVE_MINUTES_IN_TICKS = 500;
+public class BirdHousesPlugin extends TaskPlugin {
+    private static final int FIVE_MINUTES_IN_TICKS = 500;
 
-	private static final List<Integer> INV_SETUP_ITEMS = List.of(
-			ItemID.HAMMER,
-			ItemID.CHISEL
-	);
+    private static final List<Integer> INV_SETUP_ITEMS = List.of(
+            ItemID.HAMMER,
+            ItemID.CHISEL
+    );
 
-	private static final List<BirdHouse> BIRD_HOUSES = List.of(
-			new BirdHouse(BirdHouseLocation.MEADOW_NORTH, BirdHouseState.UNKNOWN),
-			new BirdHouse(BirdHouseLocation.MEADOW_SOUTH, BirdHouseState.UNKNOWN),
-			new BirdHouse(BirdHouseLocation.VALLEY_NORTH, BirdHouseState.UNKNOWN),
-			new BirdHouse(BirdHouseLocation.VALLEY_SOUTH, BirdHouseState.UNKNOWN)
-	);
+    private static final List<BirdHouse> BIRD_HOUSES = List.of(
+            new BirdHouse(BirdHouseLocation.MEADOW_NORTH, BirdHouseState.UNKNOWN),
+            new BirdHouse(BirdHouseLocation.MEADOW_SOUTH, BirdHouseState.UNKNOWN),
+            new BirdHouse(BirdHouseLocation.VALLEY_NORTH, BirdHouseState.UNKNOWN),
+            new BirdHouse(BirdHouseLocation.VALLEY_SOUTH, BirdHouseState.UNKNOWN)
+    );
 
-	private final Task[] tasks =
-			{
-					new AwaitAndLogin(this),
-					new GatherTools(this),
-					new WalkToBirdHouse(this),
-					new SetupBirdHouse(this),
-					new WaitAtBank(this),
-					new Break(this),
-			};
+    private final Task[] tasks =
+            {
+                    new AwaitAndLogin(this),
+                    new GatherTools(this),
+                    new WalkToBirdHouse(this),
+                    new SetupBirdHouse(this),
+                    new WaitAtBank(this),
+                    new Break(this),
+            };
 
-	@Inject
-	private BlockingEventManager blockingEventManager;
+    @Inject
+    private BlockingEventManager blockingEventManager;
 
-	@Getter
-	private final LoginEvent loginEvent = new LoginEvent(this.blockingEventManager);
+    @Getter
+    private final LoginEvent loginEvent = new LoginEvent(this.blockingEventManager);
 
-	private Class<?> previousTask = null;
+    private Class<?> previousTask = null;
 
-	@Inject
-	private Client client;
+    @Inject
+    private Client client;
 
-	@Inject
-	private ChatMessageManager chatMessageManager;
+    @Inject
+    private ChatMessageManager chatMessageManager;
 
-	@Inject
-	private ClientToolbar clientToolbar;
+    @Inject
+    private ClientToolbar clientToolbar;
 
-	@Inject
-	private NavigationButton navButton;
+    @Inject
+    private NavigationButton navButton;
 
-	@Override
-	public Task[] getTasks()
-	{
-		return tasks;
-	}
+    @Override
+    public Task[] getTasks() {
+        return tasks;
+    }
 
-	@Override
-	protected void startUp()
-	{
-		navButton = NavigationButton.builder()
-			.tooltip("Unethical Bird Houses")
-			.icon(ImageUtil.loadImageResource(getClass(), "birdhouses.png"))
-			.priority(0)
-			.panel(new BirdHousesPanel(this))
-			.build();
+    @Override
+    protected void startUp() {
+        navButton = NavigationButton.builder()
+                .tooltip("Unethical Bird Houses")
+                .icon(ImageUtil.loadImageResource(getClass(), "birdhouses.png"))
+                .priority(0)
+                .panel(new BirdHousesPanel(this))
+                .build();
 
-		clientToolbar.addNavigation(navButton);
-		blockingEventManager.remove(LoginEvent.class);
+        clientToolbar.addNavigation(navButton);
+        blockingEventManager.remove(LoginEvent.class);
 
-		if (client.getUsername() != null && !client.getUsername().isBlank())
-		{
-			Game.setGameAccount(new GameAccount(client.getUsername(), client.getPassword()));
-		}
+        if (client.getUsername() != null && !client.getUsername().isBlank()) {
+            Game.setGameAccount(new GameAccount(client.getUsername(), client.getPassword()));
+        }
 
-		if (Game.isLoggedIn())
-		{
-			for (BirdHouse birdHouse : getAvailableBirdHouses())
-			{
-				birdHouse.setState(BirdHouseState.fromVarpValue(Vars.getVarp(birdHouse.getVarp().getId())));
-			}
+        if (Game.isLoggedIn()) {
+            for (BirdHouse birdHouse : getAvailableBirdHouses()) {
+                birdHouse.setState(BirdHouseState.fromVarpValue(Vars.getVarp(birdHouse.getVarp().getId())));
+            }
 
-			printState();
-		}
-	}
+            printState();
+        }
+    }
 
-	@Override
-	protected void shutDown()
-	{
-		clientToolbar.removeNavigation(navButton);
-	}
+    @Override
+    protected void shutDown() {
+        clientToolbar.removeNavigation(navButton);
+    }
 
-	public List<BirdHouse> getAvailableBirdHouses()
-	{
-		return BIRD_HOUSES.stream()
-				.filter(b -> b.getState() != BirdHouseState.SEEDED || b.isComplete())
-				.collect(Collectors.toList());
-	}
+    public List<BirdHouse> getAvailableBirdHouses() {
+        return BIRD_HOUSES.stream()
+                .filter(b -> b.getState() != BirdHouseState.SEEDED || b.isComplete())
+                .collect(Collectors.toList());
+    }
 
-	public Optional<BirdHouse> getNextBirdHouse()
-	{
-		return getAvailableBirdHouses().stream().findFirst();
-	}
+    public Optional<BirdHouse> getNextBirdHouse() {
+        return getAvailableBirdHouses().stream().findFirst();
+    }
 
-	public List<BirdHouse> getBirdHouses()
-	{
-		return BIRD_HOUSES;
-	}
+    public List<BirdHouse> getBirdHouses() {
+        return BIRD_HOUSES;
+    }
 
-	public List<Integer> getTools()
-	{
-		return INV_SETUP_ITEMS;
-	}
+    public List<Integer> getTools() {
+        return INV_SETUP_ITEMS;
+    }
 
-	public void printMessage(String message)
-	{
-		chatMessageManager.queue(QueuedMessage.builder()
-				.runeLiteFormattedMessage(
-						new ChatMessageBuilder()
-								.append(ChatColorType.NORMAL)
-								.append("[Bird Houses] ")
-								.append(ChatColorType.HIGHLIGHT)
-								.append(message)
-								.build()
-				)
-				.type(ChatMessageType.ITEM_EXAMINE)
-				.build());
-	}
+    public void printMessage(String message) {
+        chatMessageManager.queue(QueuedMessage.builder()
+                .runeLiteFormattedMessage(
+                        new ChatMessageBuilder()
+                                .append(ChatColorType.NORMAL)
+                                .append("[Bird Houses] ")
+                                .append(ChatColorType.HIGHLIGHT)
+                                .append(message)
+                                .build()
+                )
+                .type(ChatMessageType.ITEM_EXAMINE)
+                .build());
+    }
 
-	private void printState()
-	{
-		for (BirdHouse birdHouse : BIRD_HOUSES)
-		{
-			printMessage(birdHouse.toString());
-		}
-	}
+    private void printState() {
+        for (BirdHouse birdHouse : BIRD_HOUSES) {
+            printMessage(birdHouse.toString());
+        }
+    }
 
-	@Provides
-	BirdHousesConfig provideConfig(ConfigManager configManager)
-	{
-		return configManager.getConfig(BirdHousesConfig.class);
-	}
+    @Provides
+    BirdHousesConfig provideConfig(ConfigManager configManager) {
+        return configManager.getConfig(BirdHousesConfig.class);
+    }
 
-	@Subscribe
-	private void onGameTick(GameTick e)
-	{
-		if (!Objects.equals(previousTask, getCurrentTask()))
-		{
-			previousTask = getCurrentTask().getClass();
-			printMessage("Task changed: " + (previousTask == null ? "Idle" : previousTask.getSimpleName()));
-		}
+    @Subscribe
+    private void onGameTick(GameTick e) {
+        if (!Objects.equals(previousTask, getCurrentTask())) {
+            previousTask = getCurrentTask().getClass();
+            printMessage("Task changed: " + (previousTask == null ? "Idle" : previousTask.getSimpleName()));
+        }
 
-		int ticks = client.getTickCount();
-		if (ticks % FIVE_MINUTES_IN_TICKS == 0)
-		{
-			printState();
-		}
-	}
+        int ticks = client.getTickCount();
+        if (ticks % FIVE_MINUTES_IN_TICKS == 0) {
+            printState();
+        }
+    }
 
-	@Subscribe
-	private void onVarbitChanged(VarbitChanged e)
-	{
-		int varpId = e.getVarpId();
-		for (BirdHouse birdHouse : BIRD_HOUSES)
-		{
-			if (birdHouse.getVarp().getId() == varpId)
-			{
-				birdHouse.setState(BirdHouseState.fromVarpValue(e.getValue()));
-			}
-		}
-	}
+    @Subscribe
+    private void onVarbitChanged(VarbitChanged e) {
+        int varpId = e.getVarpId();
+        for (BirdHouse birdHouse : BIRD_HOUSES) {
+            if (birdHouse.getVarp().getId() == varpId) {
+                birdHouse.setState(BirdHouseState.fromVarpValue(e.getValue()));
+            }
+        }
+    }
 }

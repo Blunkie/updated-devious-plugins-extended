@@ -29,136 +29,111 @@ import org.pf4j.Extension;
 @PluginDescriptor(name = "Unethical Auto Login", enabledByDefault = false)
 @Extension
 @Slf4j
-public class UnethicalAutoLoginPlugin extends Plugin
-{
-	@Inject
-	private UnethicalAutoLoginConfig config;
+public class UnethicalAutoLoginPlugin extends Plugin {
+    @Inject
+    private UnethicalAutoLoginConfig config;
 
-	@Inject
-	private Client client;
+    @Inject
+    private Client client;
 
-	@Inject
-	private ConfigManager configManager;
+    @Inject
+    private ConfigManager configManager;
 
-	@Provides
-	public UnethicalAutoLoginConfig getConfig(ConfigManager configManager)
-	{
-		return configManager.getConfig(UnethicalAutoLoginConfig.class);
-	}
+    @Provides
+    public UnethicalAutoLoginConfig getConfig(ConfigManager configManager) {
+        return configManager.getConfig(UnethicalAutoLoginConfig.class);
+    }
 
-	@Subscribe
-	private void onGameStateChanged(GameStateChanged e)
-	{
-		if (e.getGameState() == GameState.LOGIN_SCREEN && client.getLoginIndex() == 0)
-		{
-			prepareLogin();
-		}
-	}
+    @Subscribe
+    private void onGameStateChanged(GameStateChanged e) {
+        if (e.getGameState() == GameState.LOGIN_SCREEN && client.getLoginIndex() == 0) {
+            prepareLogin();
+        }
+    }
 
-	@Subscribe
-	private void onLoginStateChanged(LoginStateChanged e)
-	{
-		switch (e.getIndex())
-		{
-			case 2:
-				login();
-				break;
-			case 4:
-				enterAuth();
-				break;
-			case 24:
-				prepareLogin();
-				client.getCallbacks().post(new LoginStateChanged(2));
-				break;
-		}
-	}
+    @Subscribe
+    private void onLoginStateChanged(LoginStateChanged e) {
+        switch (e.getIndex()) {
+            case 2:
+                login();
+                break;
+            case 4:
+                enterAuth();
+                break;
+            case 24:
+                prepareLogin();
+                client.getCallbacks().post(new LoginStateChanged(2));
+                break;
+        }
+    }
 
-	@Subscribe
-	private void onWorldHopped(WorldHopped e)
-	{
-		if (config.lastWorld())
-		{
-			configManager.setConfiguration("hootautologin", "world", e.getWorldId());
-		}
-	}
+    @Subscribe
+    private void onWorldHopped(WorldHopped e) {
+        if (config.lastWorld()) {
+            configManager.setConfiguration("hootautologin", "world", e.getWorldId());
+        }
+    }
 
-	@Subscribe
-	private void onWidgetHiddenChanged(WidgetLoaded e)
-	{
-		if (!config.welcomeScreen())
-		{
-			return;
-		}
+    @Subscribe
+    private void onWidgetHiddenChanged(WidgetLoaded e) {
+        if (!config.welcomeScreen()) {
+            return;
+        }
 
-		int group = e.getGroupId();
-		if (group == 378 || group == 413)
-		{
-			Widget playButton = WelcomeScreenEvent.getPlayButton();
-			if (Widgets.isVisible(playButton))
-			{
-				client.invokeWidgetAction(1, playButton.getId(), -1, -1, "");
-			}
-		}
-	}
+        int group = e.getGroupId();
+        if (group == 378 || group == 413) {
+            Widget playButton = WelcomeScreenEvent.getPlayButton();
+            if (Widgets.isVisible(playButton)) {
+                client.invokeWidgetAction(1, playButton.getId(), -1, -1, "");
+            }
+        }
+    }
 
-	@Subscribe
-	private void onLobbyWorldSelectToggled(LobbyWorldSelectToggled e)
-	{
-		if (e.isOpened())
-		{
-			client.setWorldSelectOpen(false);
+    @Subscribe
+    private void onLobbyWorldSelectToggled(LobbyWorldSelectToggled e) {
+        if (e.isOpened()) {
+            client.setWorldSelectOpen(false);
 
-			if (config.useWorld())
-			{
-				World selectedWorld = Worlds.getFirst(config.world());
-				if (selectedWorld != null)
-				{
-					client.changeWorld(selectedWorld);
-				}
-			}
-		}
+            if (config.useWorld()) {
+                World selectedWorld = Worlds.getFirst(config.world());
+                if (selectedWorld != null) {
+                    client.changeWorld(selectedWorld);
+                }
+            }
+        }
 
-		client.promptCredentials(false);
-	}
+        client.promptCredentials(false);
+    }
 
-	@Subscribe
-	private void onPluginChanged(PluginChanged e)
-	{
-		if (e.getPlugin() != this)
-		{
-			return;
-		}
+    @Subscribe
+    private void onPluginChanged(PluginChanged e) {
+        if (e.getPlugin() != this) {
+            return;
+        }
 
-		if (e.isLoaded() && Game.getState() == GameState.LOGIN_SCREEN)
-		{
-			prepareLogin();
-			client.getCallbacks().post(new LoginStateChanged(2));
-		}
-	}
+        if (e.isLoaded() && Game.getState() == GameState.LOGIN_SCREEN) {
+            prepareLogin();
+            client.getCallbacks().post(new LoginStateChanged(2));
+        }
+    }
 
-	private void prepareLogin()
-	{
-		if (config.useWorld() && client.getWorld() != config.world())
-		{
-			client.loadWorlds();
-		}
-		else
-		{
-			client.promptCredentials(false);
-		}
-	}
+    private void prepareLogin() {
+        if (config.useWorld() && client.getWorld() != config.world()) {
+            client.loadWorlds();
+        } else {
+            client.promptCredentials(false);
+        }
+    }
 
-	private void login()
-	{
-		client.setUsername(config.username());
-		client.setPassword(config.password());
+    private void login() {
+        client.setUsername(config.username());
+        client.setPassword(config.password());
 
-		Mouse.click(299, 322, true);
-	}
+        Mouse.click(299, 322, true);
+    }
 
-	private void enterAuth()
-	{
-		client.setOtp(new Totp(config.auth()).now());
-		Keyboard.sendEnter();
-	}
+    private void enterAuth() {
+        client.setOtp(new Totp(config.auth()).now());
+        Keyboard.sendEnter();
+    }
 }

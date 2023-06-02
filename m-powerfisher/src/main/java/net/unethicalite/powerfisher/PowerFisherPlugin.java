@@ -36,6 +36,7 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.unethicalite.api.items.Inventory;
 import org.pf4j.Extension;
+
 import javax.inject.Inject;
 
 @Extension
@@ -56,8 +57,7 @@ import javax.inject.Inject;
                 }
 )
 @Slf4j
-public class PowerFisherPlugin extends Plugin
-{
+public class PowerFisherPlugin extends Plugin {
     @Inject
     private Client client;
 
@@ -65,61 +65,49 @@ public class PowerFisherPlugin extends Plugin
     private PowerFisherConfig config;
 
     @Provides
-    private PowerFisherConfig provideConfig(ConfigManager configManager)
-    {
+    private PowerFisherConfig provideConfig(ConfigManager configManager) {
         return configManager.getConfig(PowerFisherConfig.class);
     }
 
     private boolean fishing;
 
     @Override
-    protected void startUp()
-    {
+    protected void startUp() {
     }
 
     @Override
-    protected void shutDown()
-    {
+    protected void shutDown() {
     }
 
     @Subscribe
-    public void onConfigButtonPressed(ConfigButtonClicked event)
-    {
-            if (!event.getGroup().contains("powerfisher") || !event.getKey().toLowerCase().contains("start"))
-            {
-                return;
-            }
+    public void onConfigButtonPressed(ConfigButtonClicked event) {
+        if (!event.getGroup().contains("powerfisher") || !event.getKey().toLowerCase().contains("start")) {
+            return;
+        }
 
-            if (fishing)
-            {
-                reset();
-            }
-            else
-            {
-                this.fishing = true;
-            }
+        if (fishing) {
+            reset();
+        } else {
+            this.fishing = true;
+        }
     }
 
     /**
      * Reset/stop fishing
      */
-    private void reset()
-    {
+    private void reset() {
         this.fishing = false;
     }
 
     @Subscribe
-    private void onGameTick(GameTick event)
-    {
+    private void onGameTick(GameTick event) {
         // fishing
-        if (!fishing || client.getGameState() != GameState.LOGGED_IN)
-        {
+        if (!fishing || client.getGameState() != GameState.LOGGED_IN) {
             return;
         }
 
         // Stop when level is reached..
-        if (client.getBoostedSkillLevel(Skill.FISHING) >= config.destinationLevel())
-        {
+        if (client.getBoostedSkillLevel(Skill.FISHING) >= config.destinationLevel()) {
             reset();
             return;
         }
@@ -127,19 +115,16 @@ public class PowerFisherPlugin extends Plugin
         FishingType fishingType = config.fishingType();
 
         // No required items found
-        if (!Inventory.contains(fishingType.getRequiredItems()))
-        {
+        if (!Inventory.contains(fishingType.getRequiredItems())) {
             log.error("Make sure you have required items in inventory: {}", fishingType.getRequiredItems().toString());
             reset();
             return;
         }
 
         // Idle
-        if (client.getLocalPlayer().getAnimation() == -1)
-        {
+        if (client.getLocalPlayer().getAnimation() == -1) {
             // Drop fish
-            if (Inventory.contains(fishingType.getFishToDrop()))
-            {
+            if (Inventory.contains(fishingType.getFishToDrop())) {
                 Inventory.getAll(fishingType.getFishToDrop()).forEach(Item::drop);
                 return;
             }
@@ -151,8 +136,7 @@ public class PowerFisherPlugin extends Plugin
                     .findFirst()
                     .get();
 
-            if (fishingSpot == null)
-            {
+            if (fishingSpot == null) {
                 return;
             }
 
@@ -161,10 +145,8 @@ public class PowerFisherPlugin extends Plugin
     }
 
     @Subscribe
-    private void onGameStateChanged(GameStateChanged event)
-    {
-        if (event.getGameState() == GameState.LOGIN_SCREEN)
-        {
+    private void onGameStateChanged(GameStateChanged event) {
+        if (event.getGameState() == GameState.LOGIN_SCREEN) {
             reset();
         }
     }

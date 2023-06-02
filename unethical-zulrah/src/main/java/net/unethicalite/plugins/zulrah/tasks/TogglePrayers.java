@@ -16,87 +16,74 @@ import javax.inject.Inject;
 
 import static net.unethicalite.plugins.zulrah.UnethicalZulrahPlugin.atZulrah;
 
-public class TogglePrayers extends ZulrahTask
-{
-	private boolean enable = false;
+public class TogglePrayers extends ZulrahTask {
+    private boolean enable = false;
 
-	@Inject
-	private UnethicalZulrahConfig config;
+    @Inject
+    private UnethicalZulrahConfig config;
 
-	@Override
-	public boolean validate()
-	{
-		NPC zulrah = NPCs.getNearest(Constants.ZULRAH_NAME);
-		if (!atZulrah())
-		{
-			if (enable)
-			{
-				enable = false;
-			}
-		}
+    @Override
+    public boolean validate() {
+        NPC zulrah = NPCs.getNearest(Constants.ZULRAH_NAME);
+        if (!atZulrah()) {
+            if (enable) {
+                enable = false;
+            }
+        }
 
-		if (getZulrahCycle() != null && !enable && !getZulrahCycle().equals(ZulrahCycle.INITIAL))
-		{
-			enable = true;
-		}
+        if (getZulrahCycle() != null && !enable && !getZulrahCycle().equals(ZulrahCycle.INITIAL)) {
+            enable = true;
+        }
 
-		return zulrah != null
-				&& zulrah.getHealthRatio() != 0
-				&& atZulrah()
-				&& (canToggleOffensive() || canToggleDefensive());
-	}
+        return zulrah != null
+                && zulrah.getHealthRatio() != 0
+                && atZulrah()
+                && (canToggleOffensive() || canToggleDefensive());
+    }
 
-	@Override
-	public int execute()
-	{
-		if (canToggleDefensive())
-		{
-			Prayer defensive = getZulrahCycle().getZulrahType().getDefensivePrayer();
-			if (getZulrahCycle() != null)
-			{
-				Prayers.toggle(defensive);
-				Time.sleepUntil(() -> Prayers.isEnabled(defensive), 1200);
-				return 300;
-			}
-		}
+    @Override
+    public int execute() {
+        if (canToggleDefensive()) {
+            Prayer defensive = getZulrahCycle().getZulrahType().getDefensivePrayer();
+            if (getZulrahCycle() != null) {
+                Prayers.toggle(defensive);
+                Time.sleepUntil(() -> Prayers.isEnabled(defensive), 1200);
+                return 300;
+            }
+        }
 
-		if (canToggleOffensive())
-		{
-			Prayer offensive = getZulrahCycle().getZulrahType().getOffensivePrayer(config);
-			if (getZulrahCycle() != null)
-			{
-				Prayers.toggle(offensive);
-				Time.sleepUntil(() -> Prayers.isEnabled(offensive), 1200);
-				return 300;
-			}
-		}
+        if (canToggleOffensive()) {
+            Prayer offensive = getZulrahCycle().getZulrahType().getOffensivePrayer(config);
+            if (getZulrahCycle() != null) {
+                Prayers.toggle(offensive);
+                Time.sleepUntil(() -> Prayers.isEnabled(offensive), 1200);
+                return 300;
+            }
+        }
 
-		return 100;
-	}
+        return 100;
+    }
 
-	private boolean canToggleOffensive()
-	{
-		return getZulrahCycle() != null
-				&& atZulrah()
-				&& Prayers.getPoints() > 0
-				&& Skills.getLevel(Skill.PRAYER) >= 45
-				&& !Prayers.isEnabled(getZulrahCycle().getZulrahType().getOffensivePrayer(config));
-	}
+    private boolean canToggleOffensive() {
+        return getZulrahCycle() != null
+                && atZulrah()
+                && Prayers.getPoints() > 0
+                && Skills.getLevel(Skill.PRAYER) >= 45
+                && !Prayers.isEnabled(getZulrahCycle().getZulrahType().getOffensivePrayer(config));
+    }
 
-	private boolean canToggleDefensive()
-	{
-		return getZulrahCycle() != null
-				&& enable
-				&& atZulrah()
-				&& !getZulrahCycle().isJad()
-				&& !getZulrahCycle().isMelee()
-				&& Prayers.getPoints() > 0
-				&& !Prayers.isEnabled(getZulrahCycle().getZulrahType().getDefensivePrayer());
-	}
+    private boolean canToggleDefensive() {
+        return getZulrahCycle() != null
+                && enable
+                && atZulrah()
+                && !getZulrahCycle().isJad()
+                && !getZulrahCycle().isMelee()
+                && Prayers.getPoints() > 0
+                && !Prayers.isEnabled(getZulrahCycle().getZulrahType().getDefensivePrayer());
+    }
 
-	@Override
-	public boolean isBlocking()
-	{
-		return false;
-	}
+    @Override
+    public boolean isBlocking() {
+        return false;
+    }
 }
